@@ -34,9 +34,6 @@ function! VimHDL#indent() range abort
         return
     endif
 
-    " will contain every valid line
-    let lineList = []
-
     " find the biggest line from its begining to delim
     let maxval = 0
     let maxline = a:firstline
@@ -44,31 +41,32 @@ function! VimHDL#indent() range abort
         " check that the line is valid
         if matchstr(getline(lnum), delim) ==# ""
             continue
-        else
-            call add(lineList, lnum)
         endif
 
-        let splitcolumn = substitute(split(getline(lnum), delim)[0], '\s\+$', "", "")
-        let length = len(splitcolumn)
+        " split line by delim
+        let splitline = split(getline(lnum), delim)
+        " remove trailing spaces of first part before the delim
+        let splitline[0] = substitute(splitline[0], '\s\+$', "", "")
+        call setline(lnum, join(splitline, delim))
+        let length = len(splitline[0])
         if length > maxval
             let maxline = lnum
             let maxval = length
         endif
     endfor
 
-    " write one tab before the delimiter
-    execute maxline . "normal! 0f" . delim . "beldt" . delim
     execute maxline . "normal! 0f" . delim . "i\<tab>"
-
     let biggestLineLen = s:ColumnLineLen(maxline, delim)
 
-    for lnum in lineList
+    for lnum in range(a:firstline, a:lastline)
+        " check that the line is valid
+        if matchstr(getline(lnum), delim) ==# ""
+            continue
+        endif
         " don't change the biggest reference line
         if lnum == l:maxline
             continue
         endif
-        " remove trailing spaces before delimiter
-        execute lnum . "normal! 0f" . delim . "beldt" . delim
         let linelen = s:ColumnLineLen(lnum, delim)
         " add tabs until the line is the same size as the reference one
         while linelen < biggestLineLen
