@@ -1,10 +1,13 @@
 " Local functions
 
-function! s:EqualizeIndent(first_line, last_line)
+function! s:EqualizeIndent(first_line, last_line, delim)
     let l:firstline = getline(a:first_line)
     let indent_str = matchstr(l:firstline, '^\s\+')
 
     for lnum in range(a:first_line + 1, a:last_line)
+        if matchstr(getline(lnum), a:delim) ==# ""
+            continue
+        endif
         execute lnum . "normal! 0d^"
         execute "normal! i" . indent_str
     endfor
@@ -23,10 +26,10 @@ endfunction
 " Public functions
 
 function! VimHDL#indent() range abort
-    " first equalize line indenting to the first line
-    call s:EqualizeIndent(a:firstline, a:lastline)
-
     let delim = matchstr(getline(a:firstline), ':\|<\|=')
+
+    " first equalize line indenting to the first line
+    call s:EqualizeIndent(a:firstline, a:lastline, delim)
 
     " no delim found
     " TODO maybe try the next lines
